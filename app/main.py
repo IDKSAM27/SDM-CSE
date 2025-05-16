@@ -7,6 +7,7 @@ import io
 import csv
 from app.logic import fetch_emails  # If email extractor is implemented
 from app.logic.fetch_emails import get_emails
+from app.logic.filters import apply_filters
 
 
 app = FastAPI()
@@ -21,6 +22,7 @@ async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 # Handle website scraping POST
+
 @app.post("/fetch-websites")
 async def fetch_websites_route(
     request: Request,
@@ -28,13 +30,29 @@ async def fetch_websites_route(
     state: str = Form(...),
     industry: str = Form(...),
     count: int = Form(...),
-    only_shopify: bool = Form(False)
+    only_shopify: bool = Form(False),
+    domain_active: bool = Form(False),
+    fast_load: bool = Form(False),
+    exclude_csv: UploadFile = File(None)
 ):
-    websites = get_websites.get_websites(country, state, industry, count, only_shopify)
+    # Fetch websites
+    websites = get_websites.get_websites(country, state, industry, count, only_shopify=False)
+
+    # Exclusion list from uploaded CSV
+    exclude_list = []
+    if exclude_csv:
+        content = await exclude_csv.read()
+        decoded = content.decode("utf-8").splitlines()
+        exclude_list = [line.strip() for line in decoded if line.strip()]
+
+    # Apply filters
+    filtered = apply_filters(websites, exclude_list, active=domain_active, shopify=only_shopify, fast=fast_load)
+
     return templates.TemplateResponse("index.html", {
         "request": request,
-        "websites": websites
+        "websites": filtered
     })
+
 
 # Handle email extraction from CSV POST
 @app.post("/fetch-emails")

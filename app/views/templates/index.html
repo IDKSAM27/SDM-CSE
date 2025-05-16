@@ -10,7 +10,7 @@
         <h1 class="text-3xl font-bold mb-6">🛍️ E-Com Data Finder</h1>
 
         <!-- Website Fetch Form -->
-        <form action="/fetch-websites" method="post" class="bg-white p-6 rounded shadow mb-6" id="fetch-websites-form">
+        <form action="/fetch-websites" method="post" enctype="multipart/form-data" class="bg-white p-6 rounded shadow mb-6" id="fetch-websites-form">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block mb-1">Country</label>
@@ -32,12 +32,32 @@
                     <label class="block mb-1">Count</label>
                     <input name="count" type="number" value="" min="" class="w-full border p-2">
                 </div>
-                <div class="flex items-center">
-                    <input type="checkbox" name="only_shopify" class="mr-2">
-                    <label>Only Shopify Stores</label>
+            </div>
+
+            <!-- Filter checkboxes and file upload -->
+            <div class="bg-gray-50 p-4 rounded shadow mt-6">
+                <h3 class="font-semibold mb-2">🔎 Filters</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" name="domain_active" class="form-checkbox">
+                        <span>Domain Active</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" name="only_shopify" class="form-checkbox">
+                        <span>Only Shopify websites</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" name="fast_load" class="form-checkbox">
+                        <span>Loads within 5 secs</span>
+                    </label>
+                    <div>
+                        <label class="block mb-1 text-sm">Exclude websites (CSV)</label>
+                        <input type="file" name="exclude_csv" accept=".csv" class="block w-full text-sm">
+                    </div>
                 </div>
             </div>
-            <button class="mt-4 bg-black text-white px-4 py-2 rounded" type="submit">🔍 Fetch Websites</button>
+
+            <button class="mt-6 bg-black text-white px-4 py-2 rounded" type="submit">🔍 Fetch Websites</button>
         </form>
 
         <!-- Website Results -->
@@ -78,7 +98,7 @@
         {% if emails %}
             <div class="bg-white p-6 rounded shadow">
                 <h2 class="text-xl font-semibold mb-4">📧 Extracted Emails</h2>
-               <ul class="list-disc pl-6 space-y-2">
+                <ul class="list-disc pl-6 space-y-2">
                     {% for item in emails %}
                         <li>
                             <strong>{{ item.website }}</strong><br>
@@ -103,12 +123,11 @@
             const csvRows = [["Domain", "Status", "Load Time", "Shopify?"]];
             {% for site in websites %}
             csvRows.push([
-            "{{ site.url }}",
-            "{{ site.status }}",
-            "{{ site.load_time or 'N/A' }}",
-            "{{ 'Yes' if site.shopify else 'No' }}"
-        ]);
-
+                "{{ site.url }}",
+                "{{ site.status }}",
+                "{{ site.load_time or 'N/A' }}",
+                "{{ 'Yes' if site.shopify else 'No' }}"
+            ]);
             {% endfor %}
 
             const csvContent = "data:text/csv;charset=utf-8," + csvRows.map(e => e.join(",")).join("\n");
