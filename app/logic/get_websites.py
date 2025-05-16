@@ -28,12 +28,22 @@ def fetch_google_search_urls(query, count=10):
             links.append(link)
     return links
 
+def normalize_url(url):
+    parsed = urlparse(url)
+    if not parsed.scheme:
+        url = "https://" + url
+    elif parsed.scheme not in ["http", "https"]:
+        url = "https://" + parsed.netloc + parsed.path
+    return url
+
 def get_websites(country, state, industry, count=10, only_shopify=False):
     query = f"{industry} in {state}, {country}"
     websites = fetch_google_search_urls(query, count)
     results = []
+
     for site in websites:
         try:
+            site = normalize_url(site)
             start = time.time()
             res = requests.get(site, headers=HEADERS, timeout=5)
             load_time = round(time.time() - start, 2)

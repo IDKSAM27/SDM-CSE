@@ -34,15 +34,25 @@ async def fetch_websites_route(
 
 # Handle email extraction from CSV POST
 @app.post("/fetch-emails")
-async def fetch_emails_route(
-    request: Request,
-    csv_file: UploadFile = File(...)
-):
+async def fetch_emails_route(request: Request, csv_file: UploadFile = File(...)):
     content = await csv_file.read()
     lines = content.decode("utf-8").splitlines()
-    websites = [line.strip() for line in lines if line.strip()]
+
+    websites = []
+    for i, line in enumerate(lines):
+        if i == 0:
+            # Skip header line or check if header
+            continue
+        parts = line.split(",")
+        if len(parts) > 0:
+            url = parts[0].strip()
+            if url.startswith("http"):
+                websites.append(url)
+
     emails = fetch_emails.get_emails(websites)
+
     return templates.TemplateResponse("index.html", {
         "request": request,
-        "emails": emails
+        "emails": emails,
     })
+

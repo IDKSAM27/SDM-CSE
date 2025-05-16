@@ -12,7 +12,7 @@ def is_shopify(html):
 
 def get_websites(country, state, industry, count, only_shopify=False):
     dummy_domains = [
-        f"https://www.{industry.replace(' ', '')}{i}.com" for i in range(1, count + 1)
+        f"https://www.{industry.replace(' ', '')}{i}.com" for i in range(1, count + 2)
     ]
 
     results = []

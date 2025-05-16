@@ -22,15 +22,15 @@
                 </div>
                 <div>
                     <label class="block mb-1">State/City</label>
-                    <input name="state" class="w-full border p-2" value="Texas" required>
+                    <input name="state" class="w-full border p-2" value="" required>
                 </div>
                 <div>
                     <label class="block mb-1">Industry</label>
-                    <input name="industry" class="w-full border p-2" value="Eyeglasses store" required>
+                    <input name="industry" class="w-full border p-2" value="" required>
                 </div>
                 <div>
                     <label class="block mb-1">Count</label>
-                    <input name="count" type="number" value="10" min="1" class="w-full border p-2">
+                    <input name="count" type="number" value="" min="" class="w-full border p-2">
                 </div>
                 <div class="flex items-center">
                     <input type="checkbox" name="only_shopify" class="mr-2">
@@ -78,9 +78,20 @@
         {% if emails %}
             <div class="bg-white p-6 rounded shadow">
                 <h2 class="text-xl font-semibold mb-4">📧 Extracted Emails</h2>
-                <ul class="list-disc pl-6">
-                    {% for email in emails %}
-                        <li>{{ email }}</li>
+               <ul class="list-disc pl-6 space-y-2">
+                    {% for item in emails %}
+                        <li>
+                            <strong>{{ item.website }}</strong><br>
+                            {% if item.emails %}
+                                <ul class="list-disc pl-6">
+                                    {% for email in item.emails %}
+                                        <li>{{ email }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <em>No emails found.</em>
+                            {% endif %}
+                        </li>
                     {% endfor %}
                 </ul>
             </div>
@@ -92,11 +103,12 @@
             const csvRows = [["Domain", "Status", "Load Time", "Shopify?"]];
             {% for site in websites %}
             csvRows.push([
-                "{{ site.domain }}",
-                "{{ site.status }}",
-                "{{ site.load_time or 'N/A' }}",
-                "{{ 'Yes' if site.shopify else 'No' }}"
-            ]);
+            "{{ site.url }}",
+            "{{ site.status }}",
+            "{{ site.load_time or 'N/A' }}",
+            "{{ 'Yes' if site.shopify else 'No' }}"
+        ]);
+
             {% endfor %}
 
             const csvContent = "data:text/csv;charset=utf-8," + csvRows.map(e => e.join(",")).join("\n");
