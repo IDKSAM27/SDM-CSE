@@ -1,56 +1,48 @@
 from fastapi import FastAPI, Request, Form, UploadFile, File
-from fastapi.responses import HTMLResponse, StreamingResponse, RedirectResponse
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-import pandas as pd
-import io
-from .logic import fetch_sites, fetch_emails, filters
+from app.logic import get_websites
+from app.logic import fetch_emails  # If email extractor is implemented
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+# Mount static files and template directory
+app.mount("/static", StaticFiles(directory="app/views/static"), name="static")
 templates = Jinja2Templates(directory="app/views/templates")
 
+# Homepage
 @app.get("/", response_class=HTMLResponse)
-def home(request: Request):
+async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
+# Handle website scraping POST
 @app.post("/fetch-websites")
-def fetch_websites(request: Request,
-                   country: str = Form(...),
-                   state: str = Form(...),
-                   industry: str = Form(...),
-                   count: int = Form(...),
-                   active: bool = Form(False),
-                   shopify: bool = Form(False),
-                   fast: bool = Form(False),
-                   exclude_csv: UploadFile = File(None)):
-    exclude_list = []
-    if exclude_csv:
-        content = exclude_csv.file.read().decode("utf-8")
-        exclude_list = content.splitlines()
+async def fetch_websites_route(
+    request: Request,
+    country: str = Form(...),
+    state: str = Form(...),
+    industry: str = Form(...),
+    count: int = Form(...),
+    only_shopify: bool = Form(False)
+):
+    websites = get_websites.get_websites(country, state, industry, count, only_shopify)
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "websites": websites
+    })
 
-    results = fetch_sites.get_websites(country, state, industry, count)
-    results = filters.apply_filters(results, exclude_list, active, shopify, fast)
-
-    return templates.TemplateResponse("results.html", {"request": request, "results": results})
-
-@app.get("/fetch-emails", response_class=HTMLResponse)
-def email_page(request: Request):
-    return templates.TemplateResponse("fetch_emails.html", {"request": request})
-
+# Handle email extraction from CSV POST
 @app.post("/fetch-emails")
-def fetch_emails_route(request: Request, csv_file: UploadFile = File(...)):
-    content = csv_file.file.read().decode("utf-8").splitlines()
-    websites = [line.strip() for line in content]
+async def fetch_emails_route(
+    request: Request,
+    csv_file: UploadFile = File(...)
+):
+    content = await csv_file.read()
+    lines = content.decode("utf-8").splitlines()
+    websites = [line.strip() for line in lines if line.strip()]
     emails = fetch_emails.get_emails(websites)
-    return templates.TemplateResponse("fetch_emails.html", {"request": request, "emails": emails})
-
-@app.get("/export")
-def export():
-    data = [{"Website": "example.com", "Email": "info@example.com"}]
-    df = pd.DataFrame(data)
-    stream = io.StringIO()
-    df.to_csv(stream, index=False)
-    response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
-    response.headers["Content-Disposition"] = "attachment; filename=results.csv"
-    return response
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "emails": emails
+    })

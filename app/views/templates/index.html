@@ -1,21 +1,112 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <title>E-Com Data Finder</title>
+    <meta charset="UTF-8">
+    <title>E-Com Data Finder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="p-6">
-  <h1 class="text-2xl font-bold mb-4">Fetch Websites</h1>
-  <form action="/fetch-websites" method="post" enctype="multipart/form-data" class="space-y-4">
-    <input type="text" name="country" placeholder="Country" class="border p-2 w-full">
-    <input type="text" name="state" placeholder="State/City Keyword" class="border p-2 w-full">
-    <input type="text" name="industry" placeholder="Industry Keyword" class="border p-2 w-full">
-    <input type="number" name="count" placeholder="Count" class="border p-2 w-full">
-    <label><input type="checkbox" name="active"> Domain Active</label><br>
-    <label><input type="checkbox" name="shopify"> Only Shopify</label><br>
-    <label><input type="checkbox" name="fast"> Loads within 5s</label><br>
-    <input type="file" name="exclude_csv" accept=".csv">
-    <button type="submit" class="bg-blue-500 text-white px-4 py-2">Fetch Websites</button>
-  </form>
+<body class="bg-gray-100 min-h-screen p-6">
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">🛍️ E-Com Data Finder</h1>
+
+        <!-- Website Fetch Form -->
+        <form action="/fetch-websites" method="post" class="bg-white p-6 rounded shadow mb-6" id="fetch-websites-form">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block mb-1">Country</label>
+                    <select name="country" class="w-full border p-2" required>
+                        {% for country in ["USA", "India", "UK", "Australia", "Canada"] %}
+                            <option value="{{ country }}">{{ country }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-1">State/City</label>
+                    <input name="state" class="w-full border p-2" value="Texas" required>
+                </div>
+                <div>
+                    <label class="block mb-1">Industry</label>
+                    <input name="industry" class="w-full border p-2" value="Eyeglasses store" required>
+                </div>
+                <div>
+                    <label class="block mb-1">Count</label>
+                    <input name="count" type="number" value="10" min="1" class="w-full border p-2">
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" name="only_shopify" class="mr-2">
+                    <label>Only Shopify Stores</label>
+                </div>
+            </div>
+            <button class="mt-4 bg-black text-white px-4 py-2 rounded" type="submit">🔍 Fetch Websites</button>
+        </form>
+
+        <!-- Website Results -->
+        {% if websites %}
+            <div class="bg-white p-6 rounded shadow mb-6">
+                <h2 class="text-xl font-semibold mb-4">📋 Results ({{ websites|length }})</h2>
+                <button onclick="downloadCSV()" class="mb-4 bg-green-600 text-white px-4 py-1 rounded">⬇️ Download CSV</button>
+                <table class="min-w-full table-auto text-sm">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="p-2">Domain</th>
+                            <th class="p-2">Status</th>
+                            <th class="p-2">Load Time</th>
+                            <th class="p-2">Shopify?</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for site in websites %}
+                            <tr class="border-t">
+                                <td class="p-2 text-blue-600"><a href="{{ site.url }}" target="_blank">{{ site.domain }}</a></td>
+                                <td class="p-2">{{ site.status }}</td>
+                                <td class="p-2">{{ site.load_time or "N/A" }}s</td>
+                                <td class="p-2">{{ "✅" if site.shopify else "❌" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        <!-- Email Extractor -->
+        <form action="/fetch-emails" method="post" enctype="multipart/form-data" class="bg-white p-6 rounded shadow mb-6">
+            <h2 class="text-xl font-semibold mb-4">📧 Fetch Emails</h2>
+            <input type="file" name="csv_file" accept=".csv" required class="mb-4">
+            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Get Emails</button>
+        </form>
+
+        {% if emails %}
+            <div class="bg-white p-6 rounded shadow">
+                <h2 class="text-xl font-semibold mb-4">📧 Extracted Emails</h2>
+                <ul class="list-disc pl-6">
+                    {% for email in emails %}
+                        <li>{{ email }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function downloadCSV() {
+            const csvRows = [["Domain", "Status", "Load Time", "Shopify?"]];
+            {% for site in websites %}
+            csvRows.push([
+                "{{ site.domain }}",
+                "{{ site.status }}",
+                "{{ site.load_time or 'N/A' }}",
+                "{{ 'Yes' if site.shopify else 'No' }}"
+            ]);
+            {% endfor %}
+
+            const csvContent = "data:text/csv;charset=utf-8," + csvRows.map(e => e.join(",")).join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "websites.csv");
+            document.body.appendChild(link);
+            link.click();
+        }
+    </script>
 </body>
 </html>
