@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <title>Fetch Emails</title>
+</head>
+<body class="p-6">
+  <h1 class="text-2xl font-bold mb-4">Upload Websites CSV</h1>
+  <form action="/fetch-emails" method="post" enctype="multipart/form-data" class="space-y-4">
+    <input type="file" name="csv_file" accept=".csv" class="border p-2 w-full">
+    <button type="submit" class="bg-green-500 text-white px-4 py-2">Fetch Emails</button>
+  </form>
+
+  {% if emails %}
+    <h2 class="text-xl font-bold mt-6">Results</h2>
+    <ul class="list-disc ml-6">
+      {% for entry in emails %}
+        <li>{{ entry.website }} → {{ entry.email }}</li>
+      {% endfor %}
+    </ul>
+    <a href="/export" class="mt-4 inline-block text-blue-500">Download CSV</a>
+  {% endif %}
+</body>
+</html>

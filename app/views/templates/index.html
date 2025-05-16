@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <title>E-Com Data Finder</title>
+</head>
+<body class="p-6">
+  <h1 class="text-2xl font-bold mb-4">Fetch Websites</h1>
+  <form action="/fetch-websites" method="post" enctype="multipart/form-data" class="space-y-4">
+    <input type="text" name="country" placeholder="Country" class="border p-2 w-full">
+    <input type="text" name="state" placeholder="State/City Keyword" class="border p-2 w-full">
+    <input type="text" name="industry" placeholder="Industry Keyword" class="border p-2 w-full">
+    <input type="number" name="count" placeholder="Count" class="border p-2 w-full">
+    <label><input type="checkbox" name="active"> Domain Active</label><br>
+    <label><input type="checkbox" name="shopify"> Only Shopify</label><br>
+    <label><input type="checkbox" name="fast"> Loads within 5s</label><br>
+    <input type="file" name="exclude_csv" accept=".csv">
+    <button type="submit" class="bg-blue-500 text-white px-4 py-2">Fetch Websites</button>
+  </form>
+</body>
+</html>
