@@ -3,7 +3,11 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from app.logic import get_websites
+import io
+import csv
 from app.logic import fetch_emails  # If email extractor is implemented
+from app.logic.fetch_emails import get_emails
+
 
 app = FastAPI()
 
@@ -34,25 +38,24 @@ async def fetch_websites_route(
 
 # Handle email extraction from CSV POST
 @app.post("/fetch-emails")
-async def fetch_emails_route(request: Request, csv_file: UploadFile = File(...)):
-    content = await csv_file.read()
-    lines = content.decode("utf-8").splitlines()
+async def fetch_emails(request: Request, csv_file: UploadFile = File(...)):
+    contents = await csv_file.read()
+    decoded = contents.decode('utf-8')
+    reader = csv.reader(io.StringIO(decoded))
 
     websites = []
-    for i, line in enumerate(lines):
-        if i == 0:
-            # Skip header line or check if header
-            continue
-        parts = line.split(",")
-        if len(parts) > 0:
-            url = parts[0].strip()
-            if url.startswith("http"):
-                websites.append(url)
+    for row in reader:
+        if row and row[0] != "Domain":
+            websites.append(row[0].strip())
 
-    emails = fetch_emails.get_emails(websites)
+    results = get_emails(websites)
 
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "emails": emails,
-    })
+    # Save results to emails.csv
+    with open("emails.csv", "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["Website", "Emails"])
+        for item in results:
+            email_str = ", ".join(item["emails"]) if item["emails"] else "None"
+            writer.writerow([item["website"], email_str])
 
+    return templates.TemplateResponse("index.html", {"request": request, "emails": results})
